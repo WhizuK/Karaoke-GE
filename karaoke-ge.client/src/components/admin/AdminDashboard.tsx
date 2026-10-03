@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useConnectedDevices } from '../../hooks/useConnectedDevices';
+import { useLibrary } from '../../hooks/useLibrary';
 import { usePlaybackState } from '../../hooks/usePlaybackState';
 import { useQueue } from '../../hooks/useQueue';
 import { useSingers } from '../../hooks/useSingers';
 import { setLeader } from '../../services/adminCommands';
+import { removeFromLibrary } from '../../services/libraryCommands';
 import { moveDownInQueue, moveUpInQueue, removeFromQueue } from '../../services/queueCommands';
 import { getUserMessage } from '../../utils/hubError';
+import { ChurchSongs } from '../ChurchSongs';
 import { QueueList } from '../QueueList';
 import { AdminNowPlaying } from './AdminNowPlaying';
 import { AdminSingerList } from './AdminSingerList';
@@ -19,6 +22,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     const queue = useQueue();
     const playbackState = usePlaybackState();
     const singers = useSingers();
+    const library = useLibrary();
     const connectedDevices = useConnectedDevices();
     const [actionError, setActionError] = useState<string | null>(null);
 
@@ -69,6 +73,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         onMoveUp={entryId => runAction(() => moveUpInQueue(entryId))}
                         onMoveDown={entryId => runAction(() => moveDownInQueue(entryId))}
                         onRemove={entryId => runAction(() => removeFromQueue(entryId))}
+                    />
+                </section>
+
+                <section className="admin-panel">
+                    <h2>Músicas da igreja</h2>
+                    <ChurchSongs
+                        songs={library}
+                        onRemove={videoId => runAction(() => removeFromLibrary(videoId))}
                     />
                 </section>
 

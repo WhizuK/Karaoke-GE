@@ -1,4 +1,5 @@
 using Karaoke_GE.Server.Admin;
+using Karaoke_GE.Server.Library;
 using Karaoke_GE.Server.Playback;
 using Karaoke_GE.Server.Queue;
 using Karaoke_GE.Server.Singers;
@@ -13,7 +14,9 @@ public sealed class KaraokeHub(
     SongQueue songQueue,
     SingerDirectory singerDirectory,
     AdminSessions adminSessions,
-    YouTubeClient youTubeClient) : Hub<IKaraokeClient>
+    YouTubeClient youTubeClient,
+    QueueStorage queueStorage,
+    SongLibrary songLibrary) : Hub<IKaraokeClient>
 {
     private const int MinNameLength = 2;
     private const int MaxNameLength = 30;
@@ -105,11 +108,22 @@ public sealed class KaraokeHub(
     public async Task StartNextSong()
     {
         var snapshot = songQueue.StartNext(CurrentRequester());
-        var videoId = snapshot.Current?.VideoId
+        var current = snapshot.Current
             ?? throw new InvalidOperationException("StartNext devia ter definido a música atual.");
 
         await BroadcastQueue(snapshot);
-        await ChangePlayback(state => state.WithVideo(videoId));
+        await ChangePlayback(state => state.WithVideo(current.VideoId));
+        await Clients.All.LibraryChanged(songLibrary.RecordSung(current.VideoId, current.Title));
+    }
+
+    // ---------- Músicas da igreja ----------
+
+    public IReadOnlyList<LibrarySong> GetLibrary() => songLibrary.Songs;
+
+    public Task RemoveFromLibrary(string videoId)
+    {
+        RequireAdmin();
+        return Clients.All.LibraryChanged(songLibrary.Remove(videoId));
     }
 
     // ---------- Controlo do vídeo (quem está a cantar ou o admin) ----------
@@ -191,7 +205,11 @@ public sealed class KaraokeHub(
         await ChangePlayback(state => state.WithoutVideo());
     }
 
-    private Task BroadcastQueue(QueueSnapshot snapshot) => Clients.All.QueueChanged(snapshot);
+    private Task BroadcastQueue(QueueSnapshot snapshot)
+    {
+        queueStorage.Save(snapshot);
+        return Clients.All.QueueChanged(snapshot);
+    }
 
     private Task BroadcastSingers() => Clients.All.SingersChanged(singerDirectory.ConnectedSingers);
 

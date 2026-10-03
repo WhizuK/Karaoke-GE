@@ -1,3 +1,4 @@
+using Karaoke_GE.Server.Library;
 using Karaoke_GE.Server.Playback;
 using Karaoke_GE.Server.Queue;
 using Karaoke_GE.Server.Singers;
@@ -15,4 +16,6 @@ public interface IKaraokeClient
     Task QueueChanged(QueueSnapshot queue);
 
     Task SingersChanged(IReadOnlyList<Singer> singers);
+
+    Task LibraryChanged(IReadOnlyList<LibrarySong> songs);
 }

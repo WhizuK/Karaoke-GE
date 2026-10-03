@@ -10,26 +10,60 @@ type SongSearchProps = {
     onAddVideo: (videoId: string) => Promise<void>;
 };
 
-type SearchStatus = 'idle' | 'searching' | 'done';
+type SearchStatus = 'idle' | 'searching' | 'loading-more' | 'done';
+
+// A pesquisa que está a ser mostrada. Guardamo-la à parte do campo de texto,
+// para "Carregar mais" continuar a mesma pesquisa mesmo que a pessoa já tenha mudado o texto.
+type ActiveSearch = {
+    query: string;
+    onlyKaraoke: boolean;
+    nextPageToken: string | null;
+};
 
 export function SongSearch({ onAddVideo }: SongSearchProps) {
     const [query, setQuery] = useState('');
     const [onlyKaraoke, setOnlyKaraoke] = useState(false);
     const [status, setStatus] = useState<SearchStatus>('idle');
     const [results, setResults] = useState<YouTubeSearchResult[]>([]);
+    const [activeSearch, setActiveSearch] = useState<ActiveSearch | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [addingVideoId, setAddingVideoId] = useState<string | null>(null);
 
-    const canSearch = query.trim().length >= MIN_QUERY_LENGTH && status !== 'searching';
+    const isBusy = status === 'searching' || status === 'loading-more';
+    const canSearch = query.trim().length >= MIN_QUERY_LENGTH && !isBusy;
+    const canLoadMore = activeSearch?.nextPageToken != null && !isBusy;
 
     async function search() {
+        const newSearch = { query: query.trim(), onlyKaraoke };
+
         setError(null);
         setStatus('searching');
         try {
-            setResults(await searchYouTube(query.trim(), onlyKaraoke));
+            const page = await searchYouTube(newSearch.query, newSearch.onlyKaraoke);
+            setResults(page.results);
+            setActiveSearch({ ...newSearch, nextPageToken: page.nextPageToken });
         } catch (searchError) {
             setResults([]);
-            setError(searchError instanceof Error ? searchError.message : String(searchError));
+            setActiveSearch(null);
+            setError(errorMessage(searchError));
+        } finally {
+            setStatus('done');
+        }
+    }
+
+    async function loadMore() {
+        if (activeSearch === null || activeSearch.nextPageToken === null) {
+            return;
+        }
+
+        setError(null);
+        setStatus('loading-more');
+        try {
+            const page = await searchYouTube(activeSearch.query, activeSearch.onlyKaraoke, activeSearch.nextPageToken);
+            setResults(current => appendWithoutDuplicates(current, page.results));
+            setActiveSearch({ ...activeSearch, nextPageToken: page.nextPageToken });
+        } catch (loadError) {
+            setError(errorMessage(loadError));
         } finally {
             setStatus('done');
         }
@@ -41,6 +75,7 @@ export function SongSearch({ onAddVideo }: SongSearchProps) {
         try {
             await onAddVideo(videoId);
             setResults([]);
+            setActiveSearch(null);
             setQuery('');
             setStatus('idle');
         } catch (addError) {
@@ -116,6 +151,25 @@ export function SongSearch({ onAddVideo }: SongSearchProps) {
                     ))}
                 </ul>
             )}
+
+            {results.length > 0 && activeSearch?.nextPageToken != null && (
+                <button type="button" disabled={!canLoadMore} onClick={() => void loadMore()}>
+                    {status === 'loading-more' ? 'A carregar...' : 'Carregar mais resultados'}
+                </button>
+            )}
         </section>
     );
+}
+
+// O YouTube às vezes repete um vídeo entre páginas: não o mostramos duas vezes.
+function appendWithoutDuplicates(
+    current: YouTubeSearchResult[],
+    more: YouTubeSearchResult[],
+): YouTubeSearchResult[] {
+    const knownIds = new Set(current.map(result => result.videoId));
+    return [...current, ...more.filter(result => !knownIds.has(result.videoId))];
+}
+
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
 }

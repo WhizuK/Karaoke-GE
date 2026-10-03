@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Dados do karaoke (fila, histórico, líderes) — ficam só no PC
+Karaoke-GE.Server/data/
+
+# Versao publicada para o PC da igreja (gera-se de novo sempre que quiser)
+publish/

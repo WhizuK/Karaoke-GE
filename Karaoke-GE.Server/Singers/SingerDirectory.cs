@@ -1,3 +1,5 @@
+using Karaoke_GE.Server.Storage;
+
 namespace Karaoke_GE.Server.Singers;
 
 /// <summary>
@@ -7,10 +9,19 @@ namespace Karaoke_GE.Server.Singers;
 /// </summary>
 public sealed class SingerDirectory
 {
+    private const string LeadersFileName = "leaders.json";
+
     private readonly Lock _lock = new();
+    private readonly DataFiles _dataFiles;
     private readonly Dictionary<string, Guid> _singerIdByConnection = [];
     private readonly Dictionary<Guid, Singer> _singersById = [];
-    private readonly HashSet<Guid> _leaderIds = [];
+    private readonly HashSet<Guid> _leaderIds;
+
+    public SingerDirectory(DataFiles dataFiles)
+    {
+        _dataFiles = dataFiles;
+        _leaderIds = [.. dataFiles.Read(LeadersFileName, Array.Empty<Guid>())];
+    }
 
     public IReadOnlyList<Singer> ConnectedSingers
     {
@@ -73,6 +84,7 @@ public sealed class SingerDirectory
             }
 
             _singersById[singerId] = singer with { IsLeader = isLeader };
+            _dataFiles.Write(LeadersFileName, _leaderIds.ToArray());
         }
     }
 }

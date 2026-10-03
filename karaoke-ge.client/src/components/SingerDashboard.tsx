@@ -18,9 +18,8 @@ import type { Singer } from '../types/singer';
 import { getUserMessage } from '../utils/hubError';
 import { PlaybackControls } from './PlaybackControls';
 import { QueueList } from './QueueList';
-import { SongSearch } from './SongSearch';
+import { SongPicker } from './SongPicker';
 import { TurnStatus } from './TurnStatus';
-import { VideoLinkForm } from './VideoLinkForm';
 
 type SingerDashboardProps = {
     singer: Singer;
@@ -118,15 +117,7 @@ export function SingerDashboard({ singer, onChangeName }: SingerDashboardProps) 
             )}
 
             {canAddSong
-                ? (
-                    <>
-                        <SongSearch onAddVideo={addToQueue} />
-                        <details className="paste-link">
-                            <summary>Já tens o link? Cola-o aqui</summary>
-                            <VideoLinkForm onSubmitVideo={addToQueue} />
-                        </details>
-                    </>
-                )
+                ? <SongPicker onAddVideo={addToQueue} />
                 : <p className="muted-text">Já tens uma música na fila. Podes escolher outra depois de cantares.</p>}
 
             <section className="queue-section">

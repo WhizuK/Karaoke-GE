@@ -3,3 +3,8 @@ export type YouTubeSearchResult = {
     title: string;
     channelTitle: string;
 };
+
+export type YouTubeSearchPage = {
+    results: YouTubeSearchResult[];
+    nextPageToken: string | null;
+};

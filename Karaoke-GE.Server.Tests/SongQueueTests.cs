@@ -130,6 +130,23 @@ public class SongQueueTests
         Assert.Empty(snapshot.Upcoming);
     }
 
+    // ---------- Guardar e repor ----------
+
+    [Fact]
+    public void Restore_puts_the_song_that_was_playing_back_at_the_front()
+    {
+        var original = new SongQueue();
+        original.Add(Ana, AnyVideoId, AnyTitle);
+        original.Add(Pedro, AnyVideoId, AnyTitle);
+        var saved = original.StartNext(Requester.ForSinger(Ana.Id));
+
+        var restored = new SongQueue();
+        restored.Restore(saved);
+
+        Assert.Null(restored.Snapshot.Current);
+        Assert.Equal(new[] { "Ana", "Pedro" }, SingerNames(restored.Snapshot));
+    }
+
     private static string[] SingerNames(QueueSnapshot snapshot) =>
         snapshot.Upcoming.Select(entry => entry.SingerName).ToArray();
 }

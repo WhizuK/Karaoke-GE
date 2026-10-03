@@ -24,4 +24,9 @@
     </ProjectReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- O atalho de arranque vai junto com o .exe na pasta publicada. -->
+    <None Update="Iniciar-Karaoke.bat" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
 </Project>

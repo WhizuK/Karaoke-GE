@@ -13,6 +13,7 @@ public static class YouTubeEndpoints
     private static async Task<IResult> SearchAsync(
         string? q,
         bool? karaoke,
+        string? pageToken,
         YouTubeClient youTubeClient,
         CancellationToken cancellationToken)
     {
@@ -30,8 +31,8 @@ public static class YouTubeEndpoints
 
         try
         {
-            var results = await youTubeClient.SearchAsync(query, karaoke ?? false, cancellationToken);
-            return Results.Ok(results);
+            var page = await youTubeClient.SearchAsync(query, karaoke ?? false, pageToken, cancellationToken);
+            return Results.Ok(page);
         }
         catch (YouTubeUnavailableException)
         {

@@ -71,6 +71,25 @@ public sealed class SongQueue
         }
     }
 
+    /// <summary>
+    /// Repõe a fila guardada quando a app arranca. A música que estava a tocar
+    /// volta para o primeiro lugar, para a pessoa poder carregar em "Começar" outra vez.
+    /// </summary>
+    public void Restore(QueueSnapshot saved)
+    {
+        lock (_lock)
+        {
+            _upcoming.Clear();
+            if (saved.Current is not null)
+            {
+                _upcoming.Add(saved.Current);
+            }
+
+            _upcoming.AddRange(saved.Upcoming);
+            _current = null;
+        }
+    }
+
     public QueueSnapshot FinishCurrent()
     {
         lock (_lock)

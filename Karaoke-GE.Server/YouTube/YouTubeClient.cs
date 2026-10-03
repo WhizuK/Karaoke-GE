@@ -21,17 +21,19 @@ public sealed class YouTubeClient(
 
     public bool IsSearchEnabled => !string.IsNullOrWhiteSpace(options.Value.ApiKey);
 
-    public async Task<IReadOnlyList<YouTubeSearchResult>> SearchAsync(
+    /// <param name="pageToken">Vazio para a primeira página; o NextPageToken anterior para "carregar mais".</param>
+    public async Task<YouTubeSearchPage> SearchAsync(
         string query,
         bool onlyKaraoke,
+        string? pageToken,
         CancellationToken cancellationToken)
     {
         var fullQuery = onlyKaraoke ? query + KaraokeSuffix : query;
-        var cacheKey = $"youtube-search:{fullQuery.ToLowerInvariant()}";
+        var cacheKey = $"youtube-search:{fullQuery.ToLowerInvariant()}:{pageToken}";
 
-        if (cache.TryGetValue(cacheKey, out IReadOnlyList<YouTubeSearchResult>? cachedResults) && cachedResults is not null)
+        if (cache.TryGetValue(cacheKey, out YouTubeSearchPage? cachedPage) && cachedPage is not null)
         {
-            return cachedResults;
+            return cachedPage;
         }
 
         var url = "https://www.googleapis.com/youtube/v3/search"
@@ -39,6 +41,11 @@ public sealed class YouTubeClient(
             + $"&maxResults={MaxResults}"
             + $"&q={Uri.EscapeDataString(fullQuery)}"
             + $"&key={Uri.EscapeDataString(options.Value.ApiKey)}";
+
+        if (!string.IsNullOrEmpty(pageToken))
+        {
+            url += $"&pageToken={Uri.EscapeDataString(pageToken)}";
+        }
 
         using var response = await httpClient.GetAsync(url, cancellationToken);
 
@@ -58,8 +65,9 @@ public sealed class YouTubeClient(
                 WebUtility.HtmlDecode(item.Snippet.ChannelTitle)))
             .ToArray();
 
-        cache.Set(cacheKey, results, SearchCacheDuration);
-        return results;
+        var page = new YouTubeSearchPage(results, body?.NextPageToken);
+        cache.Set(cacheKey, page, SearchCacheDuration);
+        return page;
     }
 
     /// <summary>
@@ -108,7 +116,7 @@ public sealed class YouTubeClient(
         }
     }
 
-    private sealed record SearchResponse(IReadOnlyList<SearchItem>? Items);
+    private sealed record SearchResponse(IReadOnlyList<SearchItem>? Items, string? NextPageToken);
 
     private sealed record SearchItem(SearchItemId Id, SearchSnippet Snippet);
 
