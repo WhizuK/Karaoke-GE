@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { AdminLoginForm } from '../components/admin/AdminLoginForm';
 import { ConnectingNotice } from '../components/ConnectingNotice';
@@ -16,6 +17,11 @@ export function AdminPage() {
                         <p>Escreve o PIN para controlar a fila e o som.</p>
                     </header>
                     <AdminLoginForm error={error} onLogin={login} />
+                    <footer className="page-footer">
+                        <Link className="text-link" to="/">
+                            Voltar ao karaoke
+                        </Link>
+                    </footer>
                 </>
             )}
             {status === 'logged-in' && <AdminDashboard onLogout={logout} />}

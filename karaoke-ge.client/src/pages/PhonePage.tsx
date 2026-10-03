@@ -1,3 +1,4 @@
+import { AdminEntryLink } from '../components/AdminEntryLink';
 import { JoinForm } from '../components/JoinForm';
 import { SingerView } from '../components/SingerView';
 import { useSingerIdentity } from '../hooks/useSingerIdentity';
@@ -18,6 +19,10 @@ export function PhonePage() {
                     </>
                 )
                 : <SingerView identity={identity} onChangeName={clearName} />}
+
+            <footer className="page-footer">
+                <AdminEntryLink />
+            </footer>
         </main>
     );
 }

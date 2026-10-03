@@ -14,6 +14,7 @@ export function NextSingerCard({ entry }: NextSingerCardProps) {
             <div className="next-singer-text">
                 <p className="next-singer-label">Próximo a cantar</p>
                 <h1 className="next-singer-name">{entry.singerName}</h1>
+                <p className="next-singer-song">{entry.title}</p>
                 {entry.isLeader && <p className="leader-badge is-large">Líder</p>}
                 <p className="next-singer-hint">Toca em «Começar» no teu telemóvel.</p>
             </div>

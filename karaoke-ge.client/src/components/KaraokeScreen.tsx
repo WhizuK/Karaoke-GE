@@ -32,6 +32,7 @@ export function KaraokeScreen() {
                 <p className="now-singing">
                     <span className="now-singing-label">A cantar</span>
                     {current.singerName}
+                    <span className="now-singing-song">{current.title}</span>
                 </p>
             )}
 

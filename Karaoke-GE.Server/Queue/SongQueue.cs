@@ -19,7 +19,7 @@ public sealed class SongQueue
         }
     }
 
-    public QueueSnapshot Add(Singer singer, string videoId)
+    public QueueSnapshot Add(Singer singer, string videoId, string title)
     {
         lock (_lock)
         {
@@ -28,7 +28,7 @@ public sealed class SongQueue
                 throw new RuleViolationException("Já tens uma música na fila. Espera pela tua vez.");
             }
 
-            var entry = new QueueEntry(Guid.NewGuid(), singer.Id, singer.Name, singer.IsLeader, videoId);
+            var entry = new QueueEntry(Guid.NewGuid(), singer.Id, singer.Name, singer.IsLeader, videoId, title);
             _upcoming.Insert(FindInsertIndex(singer), entry);
             return CreateSnapshot();
         }

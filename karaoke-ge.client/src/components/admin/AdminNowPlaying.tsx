@@ -21,7 +21,10 @@ export function AdminNowPlaying({ current, next, playbackState, onAction }: Admi
                     <>
                         <div className="admin-song">
                             <img src={youTubeThumbnailUrl(current.videoId)} alt="" />
-                            <p className="admin-song-singer">{current.singerName}</p>
+                            <div>
+                                <p className="admin-song-singer">{current.singerName}</p>
+                                <p className="muted-text">{current.title}</p>
+                            </div>
                         </div>
                         <PlaybackControls
                             isPlaying={playbackState.isPlaying}

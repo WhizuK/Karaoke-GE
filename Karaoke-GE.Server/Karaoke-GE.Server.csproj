@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Karaoke_GE.Server</RootNamespace>
+    <UserSecretsId>karaoke-ge-cd27af2b-2aaf-4da8-831a-5e698decb1b4</UserSecretsId>
     <SpaRoot>..\karaoke-ge.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>http://localhost:53066</SpaProxyServerUrl>

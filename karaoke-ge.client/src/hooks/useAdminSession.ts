@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react';
 import { loginAsAdmin } from '../services/adminCommands';
+import { clearAdminPin, readAdminPin, saveAdminPin } from '../services/adminPinStorage';
 import { getUserMessage } from '../utils/hubError';
-import { readStoredItem, writeStoredItem } from '../utils/storage';
-
-const PIN_STORAGE_KEY = 'karaoke.adminPin';
 
 type AdminStatus = 'checking' | 'logged-out' | 'logged-in';
 
 export function useAdminSession() {
     const [status, setStatus] = useState<AdminStatus>(() =>
-        readStoredItem(PIN_STORAGE_KEY) === null ? 'logged-out' : 'checking',
+        readAdminPin() === null ? 'logged-out' : 'checking',
     );
     const [error, setError] = useState<string | null>(null);
 
-    // Este telemóvel já entrou antes: tentamos com o PIN guardado.
+    // Este aparelho já entrou antes: tentamos com o PIN guardado.
     useEffect(() => {
-        const storedPin = readStoredItem(PIN_STORAGE_KEY);
+        const storedPin = readAdminPin();
         if (storedPin === null) {
             return;
         }
@@ -23,7 +21,7 @@ export function useAdminSession() {
         loginAsAdmin(storedPin)
             .then(() => setStatus('logged-in'))
             .catch(() => {
-                writeStoredItem(PIN_STORAGE_KEY, null);
+                clearAdminPin();
                 setStatus('logged-out');
             });
     }, []);
@@ -32,7 +30,7 @@ export function useAdminSession() {
         setError(null);
         try {
             await loginAsAdmin(pin);
-            writeStoredItem(PIN_STORAGE_KEY, pin);
+            saveAdminPin(pin);
             setStatus('logged-in');
         } catch (loginError) {
             setError(getUserMessage(loginError));
@@ -40,9 +38,9 @@ export function useAdminSession() {
     }
 
     function logout() {
-        writeStoredItem(PIN_STORAGE_KEY, null);
-        // Recarregar cria uma ligação nova, que já não é admin.
-        window.location.reload();
+        clearAdminPin();
+        // Carregar a página de novo cria uma ligação nova, que já não é admin.
+        window.location.assign('/');
     }
 
     return { status, error, login, logout };

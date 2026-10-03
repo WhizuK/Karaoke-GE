@@ -4,6 +4,7 @@ export type QueueEntry = {
     singerName: string;
     isLeader: boolean;
     videoId: string;
+    title: string;
 };
 
 export type QueueSnapshot = {

@@ -56,6 +56,7 @@ export function QueueList({
                         />
                         <span className="queue-singer">
                             <span className="queue-singer-name">{entry.singerName}</span>
+                            <span className="queue-song-title">{entry.title}</span>
                             {(entry.isLeader || isMine) && (
                                 <span className="queue-badges">
                                     {entry.isLeader && <span className="leader-badge">Líder</span>}

@@ -38,7 +38,7 @@ export function VideoLinkForm({ onSubmitVideo }: VideoLinkFormProps) {
                 void submit();
             }}
         >
-            <label htmlFor="video-link">Adicionar música (link do YouTube)</label>
+            <label htmlFor="video-link">Link do YouTube</label>
             <input
                 id="video-link"
                 inputMode="url"

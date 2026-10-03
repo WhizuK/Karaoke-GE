@@ -2,6 +2,7 @@ using Karaoke_GE.Server.Admin;
 using Karaoke_GE.Server.Playback;
 using Karaoke_GE.Server.Queue;
 using Karaoke_GE.Server.Singers;
+using Karaoke_GE.Server.YouTube;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karaoke_GE.Server.Hubs;
@@ -11,7 +12,8 @@ public sealed class KaraokeHub(
     PlaybackStore playbackStore,
     SongQueue songQueue,
     SingerDirectory singerDirectory,
-    AdminSessions adminSessions) : Hub<IKaraokeClient>
+    AdminSessions adminSessions,
+    YouTubeClient youTubeClient) : Hub<IKaraokeClient>
 {
     private const int MinNameLength = 2;
     private const int MaxNameLength = 30;
@@ -79,14 +81,16 @@ public sealed class KaraokeHub(
 
     public QueueSnapshot GetQueue() => songQueue.Snapshot;
 
-    public Task AddToQueue(string videoId)
+    public async Task AddToQueue(string videoId)
     {
         if (!YouTubeVideoId.IsValid(videoId))
         {
             throw new RuleViolationException("Link do YouTube inválido.");
         }
 
-        return BroadcastQueue(songQueue.Add(RequireSinger(), videoId));
+        var singer = RequireSinger();
+        var title = await youTubeClient.GetTitleAsync(videoId, Context.ConnectionAborted);
+        await BroadcastQueue(songQueue.Add(singer, videoId, title));
     }
 
     public Task RemoveFromQueue(Guid entryId) =>

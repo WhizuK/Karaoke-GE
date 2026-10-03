@@ -4,6 +4,7 @@ using Karaoke_GE.Server.Network;
 using Karaoke_GE.Server.Playback;
 using Karaoke_GE.Server.Queue;
 using Karaoke_GE.Server.Singers;
+using Karaoke_GE.Server.YouTube;
 using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,11 @@ builder.Services.AddOptions<AdminOptions>()
         options => options.Pin.Length >= AdminOptions.MinPinLength,
         $"Defina Admin:Pin no appsettings.json com pelo menos {AdminOptions.MinPinLength} caracteres.")
     .ValidateOnStart();
+
+builder.Services.AddOptions<YouTubeOptions>()
+    .Bind(builder.Configuration.GetSection(YouTubeOptions.SectionName));
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<YouTubeClient>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
@@ -43,6 +49,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapNetworkEndpoints();
+app.MapYouTubeEndpoints();
 app.MapHub<KaraokeHub>("/hubs/karaoke");
 
 app.MapFallbackToFile("/index.html");

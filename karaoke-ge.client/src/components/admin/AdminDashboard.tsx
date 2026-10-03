@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { useConnectedDevices } from '../../hooks/useConnectedDevices';
 import { usePlaybackState } from '../../hooks/usePlaybackState';
 import { useQueue } from '../../hooks/useQueue';
@@ -33,9 +34,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <header className="admin-header">
                 <h1>Admin</h1>
                 <p className="muted-text">{connectedDevices} aparelhos ligados</p>
-                <button type="button" className="link-button" onClick={onLogout}>
-                    Sair
-                </button>
+                <nav className="admin-nav">
+                    <Link className="text-link" to="/">
+                        Voltar ao karaoke
+                    </Link>
+                    <button type="button" className="link-button" onClick={onLogout}>
+                        Sair do admin
+                    </button>
+                </nav>
             </header>
 
             {actionError !== null && (

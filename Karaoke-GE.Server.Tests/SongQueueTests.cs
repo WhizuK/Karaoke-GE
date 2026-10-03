@@ -6,6 +6,7 @@ namespace Karaoke_GE.Server.Tests;
 public class SongQueueTests
 {
     private const string AnyVideoId = "dQw4w9WgXcQ";
+    private const string AnyTitle = "Grande é o Senhor";
 
     private static readonly Singer Ana = new(Guid.NewGuid(), "Ana", IsLeader: false);
     private static readonly Singer Pedro = new(Guid.NewGuid(), "Pedro", IsLeader: false);
@@ -18,18 +19,18 @@ public class SongQueueTests
     public void Regular_singer_cannot_have_two_songs_waiting()
     {
         var queue = new SongQueue();
-        queue.Add(Ana, AnyVideoId);
+        queue.Add(Ana, AnyVideoId, AnyTitle);
 
-        Assert.Throws<RuleViolationException>(() => queue.Add(Ana, AnyVideoId));
+        Assert.Throws<RuleViolationException>(() => queue.Add(Ana, AnyVideoId, AnyTitle));
     }
 
     [Fact]
     public void Leader_can_add_several_songs()
     {
         var queue = new SongQueue();
-        queue.Add(PastorJoao, AnyVideoId);
-        queue.Add(PastorJoao, AnyVideoId);
-        var snapshot = queue.Add(PastorJoao, AnyVideoId);
+        queue.Add(PastorJoao, AnyVideoId, AnyTitle);
+        queue.Add(PastorJoao, AnyVideoId, AnyTitle);
+        var snapshot = queue.Add(PastorJoao, AnyVideoId, AnyTitle);
 
         Assert.Equal(3, snapshot.Upcoming.Count);
     }
@@ -38,10 +39,10 @@ public class SongQueueTests
     public void Leader_songs_go_before_regular_singers()
     {
         var queue = new SongQueue();
-        queue.Add(Ana, AnyVideoId);
-        queue.Add(Pedro, AnyVideoId);
-        queue.Add(PastorJoao, AnyVideoId);
-        var snapshot = queue.Add(PastorJoao, AnyVideoId);
+        queue.Add(Ana, AnyVideoId, AnyTitle);
+        queue.Add(Pedro, AnyVideoId, AnyTitle);
+        queue.Add(PastorJoao, AnyVideoId, AnyTitle);
+        var snapshot = queue.Add(PastorJoao, AnyVideoId, AnyTitle);
 
         Assert.Equal(new[] { "Pr. João", "Pr. João", "Ana", "Pedro" }, SingerNames(snapshot));
     }
@@ -50,9 +51,9 @@ public class SongQueueTests
     public void Leaders_keep_arrival_order_and_their_blocks_together()
     {
         var queue = new SongQueue();
-        queue.Add(PastorJoao, AnyVideoId);
-        queue.Add(Maria, AnyVideoId);
-        var snapshot = queue.Add(PastorJoao, AnyVideoId);
+        queue.Add(PastorJoao, AnyVideoId, AnyTitle);
+        queue.Add(Maria, AnyVideoId, AnyTitle);
+        var snapshot = queue.Add(PastorJoao, AnyVideoId, AnyTitle);
 
         Assert.Equal(new[] { "Pr. João", "Pr. João", "Maria" }, SingerNames(snapshot));
     }
@@ -61,8 +62,8 @@ public class SongQueueTests
     public void Only_the_first_singer_in_line_can_start()
     {
         var queue = new SongQueue();
-        queue.Add(Ana, AnyVideoId);
-        queue.Add(Pedro, AnyVideoId);
+        queue.Add(Ana, AnyVideoId, AnyTitle);
+        queue.Add(Pedro, AnyVideoId, AnyTitle);
 
         Assert.Throws<RuleViolationException>(() => queue.StartNext(Requester.ForSinger(Pedro.Id)));
 
@@ -75,8 +76,8 @@ public class SongQueueTests
     public void Leader_cannot_move_a_song_outside_their_block()
     {
         var queue = new SongQueue();
-        queue.Add(PastorJoao, AnyVideoId);
-        var snapshot = queue.Add(Ana, AnyVideoId);
+        queue.Add(PastorJoao, AnyVideoId, AnyTitle);
+        var snapshot = queue.Add(Ana, AnyVideoId, AnyTitle);
         var joaoSong = snapshot.Upcoming[0];
 
         Assert.Throws<RuleViolationException>(() => queue.MoveDown(joaoSong.Id, Requester.ForSinger(PastorJoao.Id)));
@@ -86,7 +87,7 @@ public class SongQueueTests
     public void Singer_cannot_remove_someone_elses_song()
     {
         var queue = new SongQueue();
-        var snapshot = queue.Add(Ana, AnyVideoId);
+        var snapshot = queue.Add(Ana, AnyVideoId, AnyTitle);
         var anaSong = snapshot.Upcoming[0];
 
         Assert.Throws<RuleViolationException>(() => queue.Remove(anaSong.Id, Requester.ForSinger(Pedro.Id)));
@@ -98,7 +99,7 @@ public class SongQueueTests
     public void Admin_can_start_the_song_for_whoever_is_next()
     {
         var queue = new SongQueue();
-        queue.Add(Ana, AnyVideoId);
+        queue.Add(Ana, AnyVideoId, AnyTitle);
 
         var snapshot = queue.StartNext(Requester.Admin);
 
@@ -109,8 +110,8 @@ public class SongQueueTests
     public void Admin_can_move_any_song_across_blocks()
     {
         var queue = new SongQueue();
-        queue.Add(PastorJoao, AnyVideoId);
-        var snapshot = queue.Add(Ana, AnyVideoId);
+        queue.Add(PastorJoao, AnyVideoId, AnyTitle);
+        var snapshot = queue.Add(Ana, AnyVideoId, AnyTitle);
         var anaSong = snapshot.Upcoming[1];
 
         snapshot = queue.MoveUp(anaSong.Id, Requester.Admin);
@@ -122,7 +123,7 @@ public class SongQueueTests
     public void Admin_can_remove_any_song()
     {
         var queue = new SongQueue();
-        var snapshot = queue.Add(Ana, AnyVideoId);
+        var snapshot = queue.Add(Ana, AnyVideoId, AnyTitle);
 
         snapshot = queue.Remove(snapshot.Upcoming[0].Id, Requester.Admin);
 
