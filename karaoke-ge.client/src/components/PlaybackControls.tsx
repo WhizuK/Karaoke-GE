@@ -20,19 +20,19 @@ export function PlaybackControls({
     return (
         <div className="playback-controls">
             <button type="button" onClick={() => onSeekBy(-SEEK_STEP_SECONDS)}>
-                « {SEEK_STEP_SECONDS}s
+                Recuar {SEEK_STEP_SECONDS} s
             </button>
-            <button type="button" className="primary" onClick={isPlaying ? onPause : onPlay}>
-                {isPlaying ? 'Pausa' : 'Tocar'}
+            <button type="button" className="button-primary" onClick={isPlaying ? onPause : onPlay}>
+                {isPlaying ? 'Pausa' : 'Continuar'}
             </button>
             <button type="button" onClick={() => onSeekBy(SEEK_STEP_SECONDS)}>
-                {SEEK_STEP_SECONDS}s »
+                Avançar {SEEK_STEP_SECONDS} s
             </button>
             <button type="button" onClick={onRestart}>
                 Recomeçar
             </button>
-            <button type="button" className="danger" onClick={onStop}>
-                Terminar
+            <button type="button" className="button-danger" onClick={onStop}>
+                Terminar música
             </button>
         </div>
     );

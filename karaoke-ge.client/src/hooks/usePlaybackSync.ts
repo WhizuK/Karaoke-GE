@@ -44,4 +44,12 @@ export function usePlaybackSync(player: YouTubePlayer | null, playbackState: Pla
             player.pauseVideo();
         }
     }, [player, playbackState]);
+
+    const volume = playbackState?.volume;
+
+    useEffect(() => {
+        if (player !== null && volume !== undefined) {
+            player.setVolume(volume);
+        }
+    }, [player, volume]);
 }

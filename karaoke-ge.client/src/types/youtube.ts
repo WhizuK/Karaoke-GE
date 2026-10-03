@@ -7,6 +7,7 @@ export type YouTubePlayer = {
     cueVideoById(videoId: string, startSeconds?: number): void;
     getCurrentTime(): number;
     getPlayerState(): number;
+    setVolume(volume: number): void;
     mute(): void;
     destroy(): void;
 };

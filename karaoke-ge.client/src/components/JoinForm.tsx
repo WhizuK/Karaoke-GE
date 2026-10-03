@@ -14,7 +14,7 @@ export function JoinForm({ onJoin }: JoinFormProps) {
 
     return (
         <form
-            className="join-form"
+            className="stack-form"
             onSubmit={event => {
                 event.preventDefault();
                 if (isValid) {
@@ -31,7 +31,7 @@ export function JoinForm({ onJoin }: JoinFormProps) {
                 autoComplete="given-name"
                 autoFocus
             />
-            <button type="submit" disabled={!isValid}>
+            <button type="submit" className="button-primary" disabled={!isValid}>
                 Entrar
             </button>
         </form>

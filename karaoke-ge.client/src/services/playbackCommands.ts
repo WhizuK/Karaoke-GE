@@ -5,10 +5,6 @@ export function fetchPlaybackState(): Promise<PlaybackState> {
     return invokeHub<PlaybackState>('GetPlaybackState');
 }
 
-export function loadVideo(videoId: string) {
-    send('LoadVideo', videoId);
-}
-
 export function play() {
     send('Play');
 }
@@ -27,6 +23,10 @@ export function seekTo(positionSeconds: number) {
 
 export function reportPosition(positionSeconds: number) {
     send('ReportPosition', positionSeconds);
+}
+
+export function reportSongEnded() {
+    send('ReportSongEnded');
 }
 
 function send(methodName: string, ...args: unknown[]) {

@@ -1,11 +1,21 @@
+using Karaoke_GE.Server.Admin;
 using Karaoke_GE.Server.Playback;
+using Karaoke_GE.Server.Queue;
+using Karaoke_GE.Server.Singers;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karaoke_GE.Server.Hubs;
 
-public sealed class KaraokeHub(ConnectionCounter connectionCounter, PlaybackStore playbackStore)
-    : Hub<IKaraokeClient>
+public sealed class KaraokeHub(
+    ConnectionCounter connectionCounter,
+    PlaybackStore playbackStore,
+    SongQueue songQueue,
+    SingerDirectory singerDirectory,
+    AdminSessions adminSessions) : Hub<IKaraokeClient>
 {
+    private const int MinNameLength = 2;
+    private const int MaxNameLength = 30;
+
     public override async Task OnConnectedAsync()
     {
         var total = connectionCounter.Increment();
@@ -15,34 +25,121 @@ public sealed class KaraokeHub(ConnectionCounter connectionCounter, PlaybackStor
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        singerDirectory.Disconnect(Context.ConnectionId);
+        adminSessions.Disconnect(Context.ConnectionId);
+
         var total = connectionCounter.Decrement();
         await Clients.All.ConnectedDevicesChanged(total);
+        await BroadcastSingers();
         await base.OnDisconnectedAsync(exception);
     }
 
-    public PlaybackState GetPlaybackState() => playbackStore.Current;
+    // ---------- Identificação ----------
 
-    public Task LoadVideo(string videoId)
+    public async Task<Singer> Register(Guid singerId, string name)
+    {
+        var displayName = name.Trim();
+        if (displayName.Length is < MinNameLength or > MaxNameLength)
+        {
+            throw new RuleViolationException($"O nome deve ter entre {MinNameLength} e {MaxNameLength} letras.");
+        }
+
+        var singer = singerDirectory.Register(Context.ConnectionId, singerId, displayName);
+        await BroadcastSingers();
+        return singer;
+    }
+
+    public IReadOnlyList<Singer> GetSingers() => singerDirectory.ConnectedSingers;
+
+    // ---------- Admin ----------
+
+    public void LoginAsAdmin(string pin)
+    {
+        if (!adminSessions.TryLogin(Context.ConnectionId, pin))
+        {
+            throw new RuleViolationException("PIN errado.");
+        }
+    }
+
+    public Task SetLeader(Guid singerId, bool isLeader)
+    {
+        RequireAdmin();
+        singerDirectory.SetLeader(singerId, isLeader);
+        return BroadcastSingers();
+    }
+
+    public Task SetVolume(int volume)
+    {
+        RequireAdmin();
+        var safeVolume = Math.Clamp(volume, 0, PlaybackState.MaxVolume);
+        return ChangePlayback(state => state with { Volume = safeVolume });
+    }
+
+    // ---------- Fila ----------
+
+    public QueueSnapshot GetQueue() => songQueue.Snapshot;
+
+    public Task AddToQueue(string videoId)
     {
         if (!YouTubeVideoId.IsValid(videoId))
         {
-            throw new HubException("Link do YouTube inválido.");
+            throw new RuleViolationException("Link do YouTube inválido.");
         }
 
-        return ChangePlayback(_ => new PlaybackState(videoId, IsPlaying: true, PositionSeconds: 0));
+        return BroadcastQueue(songQueue.Add(RequireSinger(), videoId));
     }
 
-    public Task Play() => ChangePlayback(state => state with { IsPlaying = true });
+    public Task RemoveFromQueue(Guid entryId) =>
+        BroadcastQueue(songQueue.Remove(entryId, CurrentRequester()));
 
-    public Task Pause() => ChangePlayback(state => state with { IsPlaying = false });
+    public Task MoveUpInQueue(Guid entryId) =>
+        BroadcastQueue(songQueue.MoveUp(entryId, CurrentRequester()));
 
-    public Task Stop() => ChangePlayback(_ => PlaybackState.Empty);
+    public Task MoveDownInQueue(Guid entryId) =>
+        BroadcastQueue(songQueue.MoveDown(entryId, CurrentRequester()));
+
+    public async Task StartNextSong()
+    {
+        var snapshot = songQueue.StartNext(CurrentRequester());
+        var videoId = snapshot.Current?.VideoId
+            ?? throw new InvalidOperationException("StartNext devia ter definido a música atual.");
+
+        await BroadcastQueue(snapshot);
+        await ChangePlayback(state => state.WithVideo(videoId));
+    }
+
+    // ---------- Controlo do vídeo (quem está a cantar ou o admin) ----------
+
+    public PlaybackState GetPlaybackState() => playbackStore.Current;
+
+    public Task Play()
+    {
+        EnsureCanControlPlayback();
+        return ChangePlayback(state => state with { IsPlaying = true });
+    }
+
+    public Task Pause()
+    {
+        EnsureCanControlPlayback();
+        return ChangePlayback(state => state with { IsPlaying = false });
+    }
 
     public Task SeekTo(double positionSeconds)
     {
         EnsureValidPosition(positionSeconds);
+        EnsureCanControlPlayback();
         return ChangePlayback(state => state with { PositionSeconds = positionSeconds });
     }
+
+    public Task Stop()
+    {
+        EnsureCanControlPlayback();
+        return FinishSong();
+    }
+
+    // ---------- Chamados pelo ecrã do PC ----------
+
+    public Task ReportSongEnded() => FinishSong();
 
     public Task ReportPosition(double positionSeconds)
     {
@@ -50,6 +147,49 @@ public sealed class KaraokeHub(ConnectionCounter connectionCounter, PlaybackStor
         playbackStore.Update(state => state with { PositionSeconds = positionSeconds });
         return Clients.Others.PositionReported(positionSeconds);
     }
+
+    // ---------- Auxiliares ----------
+
+    private bool IsAdmin => adminSessions.IsAdmin(Context.ConnectionId);
+
+    private Singer RequireSinger() =>
+        singerDirectory.FindByConnection(Context.ConnectionId)
+            ?? throw new RuleViolationException("Primeiro tens de entrar com o teu nome.");
+
+    private void RequireAdmin()
+    {
+        if (!IsAdmin)
+        {
+            throw new RuleViolationException("Só o admin pode fazer isto.");
+        }
+    }
+
+    private Requester CurrentRequester() =>
+        IsAdmin ? Requester.Admin : Requester.ForSinger(RequireSinger().Id);
+
+    private void EnsureCanControlPlayback()
+    {
+        if (IsAdmin)
+        {
+            return;
+        }
+
+        var singer = RequireSinger();
+        if (songQueue.Snapshot.Current?.SingerId != singer.Id)
+        {
+            throw new RuleViolationException("Só quem está a cantar pode controlar a música.");
+        }
+    }
+
+    private async Task FinishSong()
+    {
+        await BroadcastQueue(songQueue.FinishCurrent());
+        await ChangePlayback(state => state.WithoutVideo());
+    }
+
+    private Task BroadcastQueue(QueueSnapshot snapshot) => Clients.All.QueueChanged(snapshot);
+
+    private Task BroadcastSingers() => Clients.All.SingersChanged(singerDirectory.ConnectedSingers);
 
     private Task ChangePlayback(Func<PlaybackState, PlaybackState> change)
     {
@@ -61,7 +201,7 @@ public sealed class KaraokeHub(ConnectionCounter connectionCounter, PlaybackStor
     {
         if (!double.IsFinite(positionSeconds) || positionSeconds < 0)
         {
-            throw new HubException("Posição do vídeo inválida.");
+            throw new RuleViolationException("Posição do vídeo inválida.");
         }
     }
 }

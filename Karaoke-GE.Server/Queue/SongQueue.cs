@@ -23,46 +23,46 @@ public sealed class SongQueue
     {
         lock (_lock)
         {
-            if (!singer.IsMinister && _upcoming.Any(entry => entry.SingerId == singer.Id))
+            if (!singer.IsLeader && _upcoming.Any(entry => entry.SingerId == singer.Id))
             {
-                throw new QueueRuleException("Já tens uma música na fila. Espera pela tua vez.");
+                throw new RuleViolationException("Já tens uma música na fila. Espera pela tua vez.");
             }
 
-            var entry = new QueueEntry(Guid.NewGuid(), singer.Id, singer.Name, singer.IsMinister, videoId);
+            var entry = new QueueEntry(Guid.NewGuid(), singer.Id, singer.Name, singer.IsLeader, videoId);
             _upcoming.Insert(FindInsertIndex(singer), entry);
             return CreateSnapshot();
         }
     }
 
-    public QueueSnapshot Remove(Guid entryId, Guid requesterId)
+    public QueueSnapshot Remove(Guid entryId, Requester requester)
     {
         lock (_lock)
         {
-            var entry = FindOwnedEntry(entryId, requesterId);
+            var entry = FindChangeableEntry(entryId, requester);
             _upcoming.Remove(entry);
             return CreateSnapshot();
         }
     }
 
-    public QueueSnapshot MoveUp(Guid entryId, Guid requesterId) => Move(entryId, requesterId, offset: -1);
+    public QueueSnapshot MoveUp(Guid entryId, Requester requester) => Move(entryId, requester, offset: -1);
 
-    public QueueSnapshot MoveDown(Guid entryId, Guid requesterId) => Move(entryId, requesterId, offset: 1);
+    public QueueSnapshot MoveDown(Guid entryId, Requester requester) => Move(entryId, requester, offset: 1);
 
-    public QueueSnapshot StartNext(Guid requesterId)
+    public QueueSnapshot StartNext(Requester requester)
     {
         lock (_lock)
         {
             if (_current is not null)
             {
-                throw new QueueRuleException("Ainda há uma música a tocar.");
+                throw new RuleViolationException("Ainda há uma música a tocar.");
             }
 
             var next = _upcoming.FirstOrDefault()
-                ?? throw new QueueRuleException("A fila está vazia.");
+                ?? throw new RuleViolationException("A fila está vazia.");
 
-            if (next.SingerId != requesterId)
+            if (!requester.CanChange(next))
             {
-                throw new QueueRuleException("Ainda não é a tua vez.");
+                throw new RuleViolationException("Ainda não é a tua vez.");
             }
 
             _upcoming.RemoveAt(0);
@@ -82,7 +82,7 @@ public sealed class SongQueue
 
     private int FindInsertIndex(Singer singer)
     {
-        if (!singer.IsMinister)
+        if (!singer.IsLeader)
         {
             return _upcoming.Count;
         }
@@ -93,24 +93,26 @@ public sealed class SongQueue
             return lastOwnIndex + 1;
         }
 
-        return _upcoming.FindLastIndex(entry => entry.IsMinister) + 1;
+        return _upcoming.FindLastIndex(entry => entry.IsLeader) + 1;
     }
 
-    private QueueSnapshot Move(Guid entryId, Guid requesterId, int offset)
+    private QueueSnapshot Move(Guid entryId, Requester requester, int offset)
     {
         lock (_lock)
         {
-            var entry = FindOwnedEntry(entryId, requesterId);
+            var entry = FindChangeableEntry(entryId, requester);
             var index = _upcoming.IndexOf(entry);
             var targetIndex = index + offset;
 
-            var staysInOwnBlock = targetIndex >= 0
-                && targetIndex < _upcoming.Count
-                && _upcoming[targetIndex].SingerId == requesterId;
-
-            if (!staysInOwnBlock)
+            if (targetIndex < 0 || targetIndex >= _upcoming.Count)
             {
-                throw new QueueRuleException("Só podes trocar a ordem dentro das tuas músicas.");
+                throw new RuleViolationException("Essa música não pode ir mais para esse lado.");
+            }
+
+            var staysInOwnBlock = _upcoming[targetIndex].SingerId == entry.SingerId;
+            if (!requester.IsAdmin && !staysInOwnBlock)
+            {
+                throw new RuleViolationException("Só podes trocar a ordem dentro das tuas músicas.");
             }
 
             (_upcoming[index], _upcoming[targetIndex]) = (_upcoming[targetIndex], _upcoming[index]);
@@ -118,14 +120,14 @@ public sealed class SongQueue
         }
     }
 
-    private QueueEntry FindOwnedEntry(Guid entryId, Guid requesterId)
+    private QueueEntry FindChangeableEntry(Guid entryId, Requester requester)
     {
         var entry = _upcoming.Find(candidate => candidate.Id == entryId)
-            ?? throw new QueueRuleException("Essa música já não está na fila.");
+            ?? throw new RuleViolationException("Essa música já não está na fila.");
 
-        if (entry.SingerId != requesterId)
+        if (!requester.CanChange(entry))
         {
-            throw new QueueRuleException("Só podes alterar as tuas músicas.");
+            throw new RuleViolationException("Só podes alterar as tuas músicas.");
         }
 
         return entry;

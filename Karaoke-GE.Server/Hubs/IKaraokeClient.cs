@@ -1,4 +1,6 @@
 using Karaoke_GE.Server.Playback;
+using Karaoke_GE.Server.Queue;
+using Karaoke_GE.Server.Singers;
 
 namespace Karaoke_GE.Server.Hubs;
 
@@ -9,4 +11,8 @@ public interface IKaraokeClient
     Task PlaybackChanged(PlaybackState state);
 
     Task PositionReported(double positionSeconds);
+
+    Task QueueChanged(QueueSnapshot queue);
+
+    Task SingersChanged(IReadOnlyList<Singer> singers);
 }

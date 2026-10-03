@@ -1,32 +1,44 @@
 import { useState } from 'react';
+import { getUserMessage } from '../utils/hubError';
 import { parseYouTubeVideoId } from '../utils/youtubeUrl';
 
 type VideoLinkFormProps = {
-    onVideoSelected: (videoId: string) => void;
+    onSubmitVideo: (videoId: string) => Promise<void>;
 };
 
-export function VideoLinkForm({ onVideoSelected }: VideoLinkFormProps) {
+export function VideoLinkForm({ onSubmitVideo }: VideoLinkFormProps) {
     const [link, setLink] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [isSending, setIsSending] = useState(false);
+
+    async function submit() {
+        const videoId = parseYouTubeVideoId(link);
+        if (videoId === null) {
+            setError('Isto não parece um link do YouTube.');
+            return;
+        }
+
+        setError(null);
+        setIsSending(true);
+        try {
+            await onSubmitVideo(videoId);
+            setLink('');
+        } catch (submitError) {
+            setError(getUserMessage(submitError));
+        } finally {
+            setIsSending(false);
+        }
+    }
 
     return (
         <form
-            className="video-link-form"
+            className="stack-form"
             onSubmit={event => {
                 event.preventDefault();
-
-                const videoId = parseYouTubeVideoId(link);
-                if (videoId === null) {
-                    setError('Isto não parece um link do YouTube.');
-                    return;
-                }
-
-                setError(null);
-                setLink('');
-                onVideoSelected(videoId);
+                void submit();
             }}
         >
-            <label htmlFor="video-link">Link do YouTube</label>
+            <label htmlFor="video-link">Adicionar música (link do YouTube)</label>
             <input
                 id="video-link"
                 inputMode="url"
@@ -34,8 +46,8 @@ export function VideoLinkForm({ onVideoSelected }: VideoLinkFormProps) {
                 value={link}
                 onChange={event => setLink(event.target.value)}
             />
-            <button type="submit" disabled={link.trim() === ''}>
-                Tocar
+            <button type="submit" className="button-primary" disabled={link.trim() === '' || isSending}>
+                {isSending ? 'A adicionar...' : 'Adicionar à fila'}
             </button>
             {error !== null && (
                 <p className="form-error" role="alert">

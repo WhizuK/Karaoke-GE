@@ -7,9 +7,11 @@ export function ScreenPage() {
     if (!isActivated) {
         return (
             <main className="screen-activation">
-                <button type="button" className="activate-button" onClick={() => setIsActivated(true)}>
-                    Clique para ligar o ecrã do karaoke
+                <h1>Karaoke GE</h1>
+                <button type="button" className="button-gold is-huge" onClick={() => setIsActivated(true)}>
+                    Ligar o ecrã do karaoke
                 </button>
+                <p className="muted-text">O browser só deixa tocar som depois deste clique.</p>
             </main>
         );
     }

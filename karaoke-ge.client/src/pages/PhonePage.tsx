@@ -1,20 +1,23 @@
 import { JoinForm } from '../components/JoinForm';
 import { SingerView } from '../components/SingerView';
-import { useSingerName } from '../hooks/useSingerName';
+import { useSingerIdentity } from '../hooks/useSingerIdentity';
 
 export function PhonePage() {
-    const { singerName, saveSingerName, clearSingerName } = useSingerName();
+    const { identity, saveName, clearName } = useSingerIdentity();
 
     return (
         <main className="phone-page">
-            {singerName === null
+            {identity === null
                 ? (
                     <>
-                        <h1>Karaoke GE</h1>
-                        <JoinForm onJoin={saveSingerName} />
+                        <header className="phone-welcome">
+                            <h1>Karaoke GE</h1>
+                            <p>Escreve o teu nome para entrares na fila.</p>
+                        </header>
+                        <JoinForm onJoin={saveName} />
                     </>
                 )
-                : <SingerView singerName={singerName} onChangeName={clearSingerName} />}
+                : <SingerView identity={identity} onChangeName={clearName} />}
         </main>
     );
 }
