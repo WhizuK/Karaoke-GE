@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="karaoke-ge.client/karaoke-ge.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="Karaoke-GE.Server/Karaoke-GE.Server.csproj" />
+</Solution>

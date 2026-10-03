@@ -1,0 +1,6 @@
+@Karaoke_GE.Server_HostAddress = http://localhost:5240
+
+GET {{Karaoke_GE.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
