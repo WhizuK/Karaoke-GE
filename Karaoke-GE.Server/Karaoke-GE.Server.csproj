@@ -7,7 +7,7 @@
     <RootNamespace>Karaoke_GE.Server</RootNamespace>
     <SpaRoot>..\karaoke-ge.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>https://localhost:53066</SpaProxyServerUrl>
+    <SpaProxyServerUrl>http://localhost:53066</SpaProxyServerUrl>
   </PropertyGroup>
 
   <ItemGroup>

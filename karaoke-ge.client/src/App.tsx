@@ -1,36 +1,14 @@
-﻿
-import './App.css';import { useEffect, useState } from 'react';
+﻿import { useConnectedDevices } from './hooks/useConnectedDevices';
 import './App.css';
 
-
-
-type ServerStatus = 'a verificar...' | 'ligado' | 'sem ligação'|'a verificar...' | 'ligado' | 'sem ligação';
-
-
 function App() {
-    const [serverStatus, setServerStatus] = useState<ServerStatus>('a verificar...');
+    const connectedDevices = useConnectedDevices();
 
-    useEffect(() => {
-       fetch('/api/health')
-            .then(response => setServerStatus(response.ok ? 'ligado' : 'sem ligação'))
-            .catch(() => setServerStatus('sem ligação'));
-
-
-    }, []);
-
-return (
+    return (
         <main>
             <h1>Karaoke GE</h1>
-            <p>Servidor: {serverStatus}</p>
+            <p>Dispositivos ligados: {connectedDevices}</p>
         </main>
     );
 }
-return (
-        <main>
-            <h1>Karaoke GE</h1>
-            <p>Servidor: {serverStatus}</p>
-        </main>
-    );
-}
-
-export default App;
+export default App
