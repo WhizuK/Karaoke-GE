@@ -1,11 +1,10 @@
-﻿namespace Karaoke_GE.Server.Hubs
+namespace Karaoke_GE.Server.Hubs;
+
+public sealed class ConnectionCounter
 {
-    public sealed class ConnectionCounter
-    {
-        private int _count;
+    private int _count;
 
-        public int increment() => Interlocked.Increment(ref _count);
-        public int decrement() => Interlocked.Decrement(ref _count);
+    public int Increment() => Interlocked.Increment(ref _count);
 
-    }
+    public int Decrement() => Interlocked.Decrement(ref _count);
 }

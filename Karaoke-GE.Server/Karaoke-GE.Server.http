@@ -4,3 +4,8 @@ GET {{Karaoke_GE.Server_HostAddress}}/api/health
 Accept: application/json
 
 ###
+
+GET {{Karaoke_GE.Server_HostAddress}}/api/network/address
+Accept: application/json
+
+###

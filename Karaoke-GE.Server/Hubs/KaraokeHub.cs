@@ -1,21 +1,20 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 
-namespace Karaoke_GE.Server.Hubs
+namespace Karaoke_GE.Server.Hubs;
+
+public sealed class KaraokeHub(ConnectionCounter connectionCounter) : Hub<IKaraokeClient>
 {
-    public sealed class KaraokeHub(ConnectionCounter connetionCounter) : Hub<IKaraokeClient>
+    public override async Task OnConnectedAsync()
     {
-        public override async Task OnConnectedAsync()
-        {
-            var total = connetionCounter.increment();
-            await Clients.All.ConnectedDevicesChanged(total);
-            await base.OnConnectedAsync();
-        }
+        var total = connectionCounter.Increment();
+        await Clients.All.ConnectedDevicesChanged(total);
+        await base.OnConnectedAsync();
+    }
 
-        public override async Task OnDisconnectedAsync(Exception? exception)
-        {
-            var total = connetionCounter.decrement();
-            await Clients.All.ConnectedDevicesChanged(total);
-            await base.OnDisconnectedAsync(exception);
-        }
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var total = connectionCounter.Decrement();
+        await Clients.All.ConnectedDevicesChanged(total);
+        await base.OnDisconnectedAsync(exception);
     }
 }

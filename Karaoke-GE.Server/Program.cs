@@ -1,26 +1,27 @@
 using Karaoke_GE.Server.Hubs;
+using Karaoke_GE.Server.Network;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-builder.Services.AddSingleton<ConnectionCounter>();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<ConnectionCounter>();
+builder.Services.AddSingleton<LocalNetworkAddressProvider>();
 
 var app = builder.Build();
 
 app.UseDefaultFiles();
 app.MapStaticAssets();
 
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-
 }
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.MapNetworkEndpoints();
 app.MapHub<KaraokeHub>("/hubs/karaoke");
 
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("/index.html");
 
 app.Run();
