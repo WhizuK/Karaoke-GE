@@ -9,3 +9,13 @@ GET {{Karaoke_GE.Server_HostAddress}}/api/network/address
 Accept: application/json
 
 ###
+
+# Testa o SignalR diretamente no .NET (sem passar pelo Vite)
+POST {{Karaoke_GE.Server_HostAddress}}/hubs/karaoke/negotiate?negotiateVersion=1
+
+###
+
+# Testa o SignalR através do Vite (o caminho que o browser usa)
+POST http://localhost:53066/hubs/karaoke/negotiate?negotiateVersion=1
+
+###

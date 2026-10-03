@@ -4,4 +4,5 @@
     <Deploy />
   </Project>
   <Project Path="Karaoke-GE.Server/Karaoke-GE.Server.csproj" />
+  <Project Path="Karaoke-GE.Server.Tests/Karaoke-GE.Server.Tests.csproj" />
 </Solution>

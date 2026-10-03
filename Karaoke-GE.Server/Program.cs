@@ -1,5 +1,6 @@
 using Karaoke_GE.Server.Hubs;
 using Karaoke_GE.Server.Network;
+using Karaoke_GE.Server.Playback;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<ConnectionCounter>();
 builder.Services.AddSingleton<LocalNetworkAddressProvider>();
+builder.Services.AddSingleton<PlaybackStore>();
 
 var app = builder.Build();
 
