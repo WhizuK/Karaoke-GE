@@ -9,8 +9,13 @@ import { JoinQrCode } from './JoinQrCode';
 import { NextSingerCard } from './NextSingerCard';
 import { QueueList } from './QueueList';
 
-const VISIBLE_UPCOMING = 5;
+const VISIBLE_UPCOMING = 4;
+const QR_CODE_SIZE = 200;
 
+/**
+ * Ecrã do PC: o vídeo à esquerda e uma coluna fixa à direita com o QR code.
+ * O QR code fica sempre visível, para alguém poder entrar na fila a meio de uma música.
+ */
 export function KaraokeScreen() {
     const joinUrl = useJoinUrl();
     const playbackState = usePlaybackState();
@@ -22,23 +27,21 @@ export function KaraokeScreen() {
 
     const hasVideo = playbackState?.videoId != null;
     const current = queue?.current ?? null;
-    const [nextEntry, ...laterEntries] = queue?.upcoming ?? [];
+    const upcoming = queue?.upcoming ?? [];
+    const [nextEntry] = upcoming;
+
+    // Enquanto nada toca, o próximo cantor aparece em grande no palco, por isso a lista começa no 2.º.
+    const listedEntries = hasVideo ? upcoming : upcoming.slice(1);
+    const firstListedPosition = hasVideo ? 1 : 2;
 
     return (
         <main className="screen-page">
-            <div ref={containerRef} className="video-frame" />
+            <div className="screen-stage">
+                {/* O leitor está sempre montado: tirá-lo do ecrã obrigava a recriar o vídeo. */}
+                <div ref={containerRef} className="video-frame" />
 
-            {hasVideo && current !== null && (
-                <p className="now-singing">
-                    <span className="now-singing-label">A cantar</span>
-                    {current.singerName}
-                    <span className="now-singing-song">{current.title}</span>
-                </p>
-            )}
-
-            {!hasVideo && (
-                <div className="screen-idle">
-                    <div className="screen-stage">
+                {!hasVideo && (
+                    <div className="screen-idle">
                         {nextEntry !== undefined
                             ? <NextSingerCard entry={nextEntry} />
                             : (
@@ -48,26 +51,38 @@ export function KaraokeScreen() {
                                 </section>
                             )}
                     </div>
+                )}
+            </div>
 
-                    <aside className="screen-join">
-                        <p className="screen-join-title">Entrar na fila</p>
-                        {joinUrl !== null
-                            ? <JoinQrCode url={joinUrl} size={nextEntry !== undefined ? 180 : 260} />
-                            : <p>A procurar a rede local...</p>}
-                    </aside>
+            <aside className="screen-sidebar">
+                {hasVideo && current !== null && (
+                    <section className="now-singing">
+                        <span className="now-singing-label">A cantar</span>
+                        <span className="now-singing-name">{current.singerName}</span>
+                        <span className="now-singing-song">{current.title}</span>
+                    </section>
+                )}
 
-                    {laterEntries.length > 0 && (
-                        <section className="screen-upcoming">
-                            <h2>A seguir</h2>
-                            <QueueList
-                                entries={laterEntries.slice(0, VISIBLE_UPCOMING)}
-                                firstPosition={2}
-                                variant="strip"
-                            />
-                        </section>
-                    )}
-                </div>
-            )}
+                <section className="screen-join">
+                    <p className="screen-join-title">Entrar na fila</p>
+                    {joinUrl !== null
+                        ? <JoinQrCode url={joinUrl} size={QR_CODE_SIZE} />
+                        : <p>A procurar a rede local...</p>}
+                </section>
+
+                {listedEntries.length > 0 && (
+                    <section className="screen-upcoming">
+                        <h2>A seguir</h2>
+                        <QueueList
+                            entries={listedEntries.slice(0, VISIBLE_UPCOMING)}
+                            firstPosition={firstListedPosition}
+                        />
+                        {listedEntries.length > VISIBLE_UPCOMING && (
+                            <p className="muted-text">e mais {listedEntries.length - VISIBLE_UPCOMING}...</p>
+                        )}
+                    </section>
+                )}
+            </aside>
         </main>
     );
 }

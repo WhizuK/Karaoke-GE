@@ -6,7 +6,7 @@ import { usePlaybackSync } from '../hooks/usePlaybackSync';
 import { useQueue } from '../hooks/useQueue';
 import { useSingers } from '../hooks/useSingers';
 import { useYouTubePlayer } from '../hooks/useYouTubePlayer';
-import { pause, play, seekTo, stop } from '../services/playbackCommands';
+import { pause, play, seekBy, seekTo, stop } from '../services/playbackCommands';
 import {
     addToQueue,
     moveDownInQueue,
@@ -52,12 +52,6 @@ export function SingerDashboard({ singer, onChangeName }: SingerDashboardProps) 
     function runAction(action: () => Promise<void>) {
         setActionError(null);
         action().catch(error => setActionError(getUserMessage(error)));
-    }
-
-    function seekBy(deltaSeconds: number) {
-        if (player !== null) {
-            seekTo(player.getCurrentTime() + deltaSeconds);
-        }
     }
 
     return (

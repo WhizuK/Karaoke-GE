@@ -21,6 +21,11 @@ export function seekTo(positionSeconds: number) {
     send('SeekTo', Math.max(0, positionSeconds));
 }
 
+/** Avança (positivo) ou recua (negativo). O servidor calcula a partir da posição real do PC. */
+export function seekBy(deltaSeconds: number) {
+    send('SeekBy', deltaSeconds);
+}
+
 export function reportPosition(positionSeconds: number) {
     send('ReportPosition', positionSeconds);
 }

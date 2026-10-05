@@ -149,6 +149,19 @@ public sealed class KaraokeHub(
         return ChangePlayback(state => state with { PositionSeconds = positionSeconds });
     }
 
+    // "Recuar/Avançar 10 s" é calculado aqui, a partir da posição que o PC reportou.
+    // Não confiamos no relógio do telemóvel ou do admin: pode estar parado ou desatualizado.
+    public Task SeekBy(double deltaSeconds)
+    {
+        if (!double.IsFinite(deltaSeconds))
+        {
+            throw new RuleViolationException("Salto inválido.");
+        }
+
+        EnsureCanControlPlayback();
+        return ChangePlayback(state => state.WithPositionMovedBy(deltaSeconds));
+    }
+
     public Task Stop()
     {
         EnsureCanControlPlayback();

@@ -12,4 +12,8 @@ public sealed record PlaybackState(string? VideoId, bool IsPlaying, double Posit
 
     public PlaybackState WithoutVideo() =>
         this with { VideoId = null, IsPlaying = false, PositionSeconds = 0 };
+
+    /// <summary>Avança (positivo) ou recua (negativo) a partir da posição atual, sem passar do início.</summary>
+    public PlaybackState WithPositionMovedBy(double deltaSeconds) =>
+        this with { PositionSeconds = Math.Max(0, PositionSeconds + deltaSeconds) };
 }

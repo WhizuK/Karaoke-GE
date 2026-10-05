@@ -1,4 +1,4 @@
-import { pause, play, seekTo, stop } from '../../services/playbackCommands';
+import { pause, play, seekBy, seekTo, stop } from '../../services/playbackCommands';
 import { startNextSong } from '../../services/queueCommands';
 import type { PlaybackState } from '../../types/playback';
 import type { QueueEntry } from '../../types/queue';
@@ -30,7 +30,7 @@ export function AdminNowPlaying({ current, next, playbackState, onAction }: Admi
                             isPlaying={playbackState.isPlaying}
                             onPlay={play}
                             onPause={pause}
-                            onSeekBy={delta => seekTo(playbackState.positionSeconds + delta)}
+                            onSeekBy={seekBy}
                             onRestart={() => seekTo(0)}
                             onStop={stop}
                         />

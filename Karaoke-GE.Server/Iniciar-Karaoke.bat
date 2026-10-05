@@ -1,7 +1,7 @@
 @echo off
 title Karaoke GE
-rem Arranca o servidor do karaoke e abre o ecra em modo quiosque.
-rem Para fechar: Alt+F4 no ecra e fechar a janela preta do servidor.
+rem Arranca o servidor do karaoke e abre o ecra numa janela maximizada.
+rem Para fechar: fechar a janela do ecra e a janela preta do servidor.
 
 cd /d "%~dp0"
 
@@ -20,7 +20,8 @@ goto esperar
 
 :pronto
 echo Servidor pronto. A abrir o ecra do karaoke...
-start "" msedge --kiosk "http://localhost:5240/ecra" --edge-kiosk-type=fullscreen --no-first-run
+rem --app abre uma janela normal (minimizar, maximizar, fechar) sem barra de endereco.
+start "" msedge --app="http://localhost:5240/ecra" --start-maximized --no-first-run
 exit /b 0
 
 :falhou
