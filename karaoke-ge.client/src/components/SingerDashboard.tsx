@@ -5,6 +5,7 @@ import { usePlaybackState } from '../hooks/usePlaybackState';
 import { usePlaybackSync } from '../hooks/usePlaybackSync';
 import { useQueue } from '../hooks/useQueue';
 import { useSingers } from '../hooks/useSingers';
+import { useStalledPlayback } from '../hooks/useStalledPlayback';
 import { useYouTubePlayer } from '../hooks/useYouTubePlayer';
 import { pause, play, seekBy, seekTo, stop } from '../services/playbackCommands';
 import {
@@ -48,6 +49,7 @@ export function SingerDashboard({ singer, onChangeName }: SingerDashboardProps) 
     const isMyTurn = current === null && myIndex === 0;
     const canAddSong = isLeader || myIndex === -1;
     const hasVideo = playbackState?.videoId != null;
+    const isStalled = useStalledPlayback(player, hasVideo && playbackState?.isPlaying === true);
 
     function runAction(action: () => Promise<void>) {
         setActionError(null);
@@ -70,8 +72,15 @@ export function SingerDashboard({ singer, onChangeName }: SingerDashboardProps) 
                 ref={fullscreen.elementRef}
                 className={fullscreen.isFullscreen ? 'phone-video is-fullscreen' : 'phone-video'}
             >
-                <div ref={containerRef} className="video-frame" />
+                {/* Se o telemóvel bloqueou o vídeo, deixamos tocar nele: um toque dentro do vídeo
+                    é o que o iPhone exige para o pôr a andar. Depois a sincronização acerta o tempo. */}
+                <div ref={containerRef} className={isStalled ? 'video-frame is-tappable' : 'video-frame'} />
                 {!hasVideo && <p className="video-placeholder">Nenhuma música a tocar</p>}
+                {isStalled && (
+                    <p className="tap-to-play" aria-live="polite">
+                        <span>Toca no vídeo para ver a letra</span>
+                    </p>
+                )}
                 {fullscreen.isFullscreen && (
                     <button type="button" className="exit-fullscreen" onClick={fullscreen.exit}>
                         Sair do ecrã inteiro

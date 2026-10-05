@@ -486,6 +486,31 @@ input:focus {
     border: 0;
 }
 
+.phone-video .video-frame.is-tappable {
+    pointer-events: auto;
+}
+
+/* Aviso por cima do vídeo parado. Deixa passar o toque para o vídeo (pointer-events: none). */
+.tap-to-play {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    pointer-events: none;
+}
+
+.tap-to-play span {
+    padding: 0.75rem 1.25rem;
+    border: 3px solid var(--ouro);
+    background: rgb(27 31 59 / 0.85);
+    color: var(--ouro);
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+}
+
 .exit-fullscreen {
     position: absolute;
     top: 0.75rem;

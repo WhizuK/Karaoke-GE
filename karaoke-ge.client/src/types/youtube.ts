@@ -31,4 +31,5 @@ export const YouTubePlayerState = {
     Ended: 0,
     Playing: 1,
     Paused: 2,
+    Buffering: 3,
 } as const;
